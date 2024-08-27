@@ -312,7 +312,10 @@ class PaymentDetailsPage extends StatefulWidget {
 
 class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
   String? _selectedAccountDetail = 'Mobile number';
-  TextEditingController _controller = TextEditingController();
+  TextEditingController _nameController = TextEditingController();
+  TextEditingController _phoneController = TextEditingController();
+  TextEditingController _amountController = TextEditingController();
+  TextEditingController _messageController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -346,23 +349,40 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
             SizedBox(height: 20),
             buildRadioButton('Mobile number'),
             if (_selectedAccountDetail == 'Mobile number')
-              TextField(
-                controller: _controller,
-                decoration: InputDecoration(
-                  hintText: 'Enter phone number or name here',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide.none,
+              Column(
+                children: [
+                  TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      hintText: 'Enter name here',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      fillColor: Colors.grey[200],
+                      filled: true,
+                    ),
                   ),
-                  fillColor: Colors.grey[200],
-                  filled: true,
-                ),
+                  SizedBox(height: 10),
+                  TextField(
+                    controller: _phoneController,
+                    decoration: InputDecoration(
+                      hintText: 'Enter phone number here',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      fillColor: Colors.grey[200],
+                      filled: true,
+                    ),
+                  ),
+                ],
               ),
             SizedBox(height: 10),
             buildRadioButton('NRIC/FIN'),
             if (_selectedAccountDetail == 'NRIC/FIN')
               TextField(
-                controller: _controller,
+                controller: _phoneController,
                 decoration: InputDecoration(
                   hintText: 'Enter NRIC/FIN here',
                   border: OutlineInputBorder(
@@ -377,7 +397,7 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
             buildRadioButton('Unique Entity Number (UEN)'),
             if (_selectedAccountDetail == 'Unique Entity Number (UEN)')
               TextField(
-                controller: _controller,
+                controller: _phoneController,
                 decoration: InputDecoration(
                   hintText: 'Enter UEN here',
                   border: OutlineInputBorder(
@@ -392,7 +412,7 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
             buildRadioButton('Virtual Payment Address (VPA)'),
             if (_selectedAccountDetail == 'Virtual Payment Address (VPA)')
               TextField(
-                controller: _controller,
+                controller: _phoneController,
                 decoration: InputDecoration(
                   hintText: 'Enter VPA here',
                   border: OutlineInputBorder(
@@ -403,31 +423,71 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
                   filled: true,
                 ),
               ),
+            SizedBox(height: 20),
+            Text(
+              'Enter Amount',
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF8B1D9E)),
+            ),
+            TextField(
+              controller: _amountController,
+              decoration: InputDecoration(
+                hintText: '0.00',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide.none,
+                ),
+                fillColor: Colors.grey[200],
+                filled: true,
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Message (optional)',
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF8B1D9E)),
+            ),
+            TextField(
+              controller: _messageController,
+              decoration: InputDecoration(
+                hintText: 'Enter message here',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide.none,
+                ),
+                fillColor: Colors.grey[200],
+                filled: true,
+              ),
+              maxLength: 150,
+            ),
             Spacer(),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF8B1D9E),
+                backgroundColor: _amountController.text.isNotEmpty
+                    ? Color(0xFF8B1D9E)
+                    : Colors.grey, // Disable button if amount is empty
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
-              onPressed: () {
-                TransactionHistoryPage.addTransaction(
-                  context,
-                  'Sent to ${_controller.text}', // Example title
-                  '-S\$ 80.00', // Example amount
-                );
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => ReceiptPage(
-                            amount: "80.00", // Example amount
-                            recipient:
-                                _controller.text, // Pass recipient name/number
-                          )),
-                );
-              },
+              onPressed: _amountController.text.isNotEmpty
+                  ? () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ReceiptPage(
+                                  amount: _amountController.text,
+                                  recipient: _nameController.text,
+                                  phone: _phoneController.text,
+                                )),
+                      );
+                    }
+                  : null, // Disable the button when amount is empty
               child: Text('Next',
                   style: TextStyle(
                       color: Colors.white,
@@ -449,7 +509,8 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
         onChanged: (String? newValue) {
           setState(() {
             _selectedAccountDetail = newValue;
-            _controller.clear(); // Clear the text field when switching
+            _phoneController.clear(); // Clear the text field when switching
+            _nameController.clear(); // Clear the name field when switching
           });
         },
       ),
@@ -460,8 +521,10 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
 class ReceiptPage extends StatelessWidget {
   final String amount;
   final String recipient;
+  final String phone;
 
-  ReceiptPage({required this.amount, required this.recipient});
+  ReceiptPage(
+      {required this.amount, required this.recipient, required this.phone});
 
   @override
   Widget build(BuildContext context) {
@@ -513,7 +576,7 @@ class ReceiptPage extends StatelessWidget {
                     color: Colors.black),
               ),
               SizedBox(height: 20),
-              buildReceiptItem('PayNow Mobile', recipient),
+              buildReceiptItem('PayNow Mobile', phone),
               buildReceiptItem(
                   'PayNow Reference', '20240629100267023457P0176649'),
               buildReceiptItem('Description', 'Send to $recipient'),
